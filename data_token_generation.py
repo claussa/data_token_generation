@@ -17,20 +17,38 @@ social_media = st.radio(
 
 st.text("Import CSV here")
 form = st.form("my_form", clear_on_submit=True)
-uploaded_file = form.file_uploader('CSV', type='csv', accept_multiple_files=False)
+uploaded_files = form.file_uploader('CSV', type='csv', accept_multiple_files=True)
 submit = form.form_submit_button("Generate data token")
 
 if submit:
-    if uploaded_file is not None and social_media is not None:
+    if uploaded_files is not None and social_media is not None:
         my_bar = st.progress(0, text="Cleaning CSV data ...")
-        df = pd.read_csv(uploaded_file, skiprows=5)
-        df = df.replace('', np.nan)
-        numeric_columns = ['Followers Count', 'Subscriber Count', 'Average Likes',
-                           'Average Views', 'Engagement rate', 'Follower growth']
-        for col in numeric_columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce')
+        dfs = []
 
-        my_bar.progress(5, text="Generate data token ...")
+        # Process each uploaded file
+        for i, uploaded_file in enumerate(uploaded_files):
+            # Update progress bar
+            progress = int((i + 1) / len(uploaded_files) * 20)
+            my_bar.progress(progress, text=f"Processing file {i+1} of {len(uploaded_files)}...")
+
+            # Read and clean individual CSV
+            temp_df = pd.read_csv(uploaded_file, skiprows=5)
+            temp_df = temp_df.replace('', np.nan)
+
+            # Convert numeric columns
+            numeric_columns = ['Followers Count', 'Subscriber Count', 'Average Likes',
+                               'Average Views', 'Engagement rate', 'Follower growth']
+            for col in numeric_columns:
+                temp_df[col] = pd.to_numeric(temp_df[col], errors='coerce')
+
+            # Add to list of dataframes
+            dfs.append(temp_df)
+
+        df = pd.concat(dfs, ignore_index=True)
+        # Remove potential duplicates
+        df = df.drop_duplicates(subset=['Username'], keep='first')
+
+        my_bar.progress(20, text="Generate data token ...")
 
         # Convert country codes
         df['iso_country'] = df['Creator\'s Country'].map(lambda country: coco.convert(country, to='ISO2'))
