@@ -35,12 +35,6 @@ if submit:
             temp_df = pd.read_csv(uploaded_file, skiprows=5)
             temp_df = temp_df.replace('', np.nan)
 
-            # Convert numeric columns
-            numeric_columns = ['Followers Count', 'Subscriber Count', 'Average Likes',
-                               'Average Views', 'Engagement rate', 'Follower growth']
-            for col in numeric_columns:
-                temp_df[col] = pd.to_numeric(temp_df[col], errors='coerce')
-
             # Add to list of dataframes
             dfs.append(temp_df)
 
